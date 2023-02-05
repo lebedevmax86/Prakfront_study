@@ -1,7 +1,14 @@
+
 export const ProfilePage = () => {
+
+    const token = localStorage.getItem('token') 
+
     return (
         <>
-            <h1>Профиль </h1>
+
+        {!token ? (<h1>Доступ закрыт </h1>) : <h1>Профиль </h1>}
+      
+         
             
         </>
     )

@@ -6,6 +6,9 @@ import {
   Navbar,
   Container,
   Nav,
+  Modal,
+  Button,
+  Form
 } from 'react-bootstrap'
 import { useNavigate } from 'react-router-dom'
 import '../node_modules/bootstrap/dist/css/bootstrap.css'
@@ -15,6 +18,13 @@ import '../node_modules/bootstrap/dist/css/bootstrap.css'
 function App() {
   const navigate = useNavigate();
   const [isAuth, setAuth] = useState(false);
+  const [isShowModal, setIsShowModal] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+
+
+  const closeModal = () => setIsShowModal(false);
+  const showModal = () => setIsShowModal(true);
 
   useEffect(() => {
     const token = localStorage.getItem('token')
@@ -34,6 +44,47 @@ function App() {
     navigate('/');
   }
 
+  const handleSubmit = () => {
+
+    var myHeaders = new Headers();
+myHeaders.append("Content-Type", "application/x-www-form-urlencoded");
+
+var urlencoded = new URLSearchParams();
+urlencoded.append("email", email);
+urlencoded.append("password", password);
+
+var requestOptions = {
+  method: 'POST',
+  headers: myHeaders,
+  body: urlencoded,
+  redirect: 'follow'
+};
+
+fetch("http://localhost:8000/login", requestOptions)
+  .then(response => response.json())
+  .then(result => {
+    console.log(result)
+    if ( 'errors' in result ){
+      alert('Не получилось....')
+    } else {
+      let token = result.token;
+      localStorage.setItem('token', token);
+      localStorage.setItem('user', JSON.stringify({
+          "name": result.user.name,
+          "email": result.user.email,
+      }));
+      closeModal();
+      navigate('/');
+    }
+  })
+  .catch(error => console.log('error', error));
+
+
+
+  }
+
+
+
   return (
     <div className="App">
       <Navbar bg='light' variant='light'>
@@ -45,7 +96,7 @@ function App() {
           <Nav className='jastify-content-end'>
             {!isAuth ? (<>
               <Link to="/reg" className="nav-link">Регистрация</Link>
-              <Link to="/login" className="nav-link">Войти</Link>
+              <Nav.Link href="#" onClick={showModal}>Войти</Nav.Link>
             </>) : (<>
               <Link to="/profile" className="nav-link">Профиль</Link>
               <Nav.Link href="#" onClick={handleLogout}>Выход</Nav.Link>
@@ -58,6 +109,46 @@ function App() {
       <Container>
         <Outlet />
       </Container>
+
+      <Modal show={isShowModal} onHide={closeModal}>
+        <Modal.Header closeButton>
+          <Modal.Title>Вход</Modal.Title>
+        </Modal.Header>
+
+        <Modal.Body>
+        <Form> 
+
+            <Form.Group className="mb-3" controlId="formBasicEmail">
+                <Form.Label>Email</Form.Label>
+                <Form.Control
+                    type="email"
+                    name="email"
+                    placeholder="Enter"
+                    value={email}
+                    onChange={(ev) => setEmail(ev.target.value)}
+                />
+
+            </Form.Group>
+
+            <Form.Group className="mb-3" controlId="formBasicPassword">
+                <Form.Label>Пароль</Form.Label>
+                <Form.Control
+                    type="password"
+                    name="password"
+                    placeholder="Пароль"
+                    value={password}
+                    onChange={(ev) => setPassword(ev.target.value)}
+                />
+            </Form.Group>
+
+        </Form>
+        </Modal.Body>
+
+        <Modal.Footer>
+          <Button variant="secondary" onClick={closeModal}>Закрыть</Button>
+          <Button variant="primary" onClick={handleSubmit}>Войти</Button>
+        </Modal.Footer>
+      </Modal>
 
     </div >
   );
